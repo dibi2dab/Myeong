@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Myeong 命 · 사주팔자</title>
+    <meta
+      name="description"
+      content="전통 명리학의 사주팔자(四柱)를 규칙 그대로 계산하는 정적 웹 앱. 모든 계산이 브라우저 안에서 이루어지고, 해석마다 근거를 함께 보여줍니다."
+    />
+    <!--
+      정적 사이트이므로 외부 요청이 없어야 한다. CSP 로 그것을 강제한다.
+      (`frame-ancestors` 는 <meta> 로는 먹히지 않으므로 넣지 않는다. Pages 응답 헤더에서 건다.)
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'"
+    />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="color-scheme" content="light dark" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">본문으로 건너뛰기</a>
+    <div id="app"></div>
+    <noscript>
+      <p class="noscript">
+        Myeong 은 이 브라우저에서 직접 사주를 계산합니다. 계산에 JavaScript 가 필요하므로
+        JavaScript 를 켜고 다시 열어 주세요.
+      </p>
+    </noscript>
+    <script type="module" src="./web/main.ts"></script>
+  </body>
+</html>

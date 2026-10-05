@@ -1,0 +1,68 @@
+# 하루치 운세 이메일.
+#
+# 이 워크플로는 **읽기 전용**이다.
+# - 저장소에 파일을 쓰지 않는다. (결과물 · 아티팩트 · 캐시 없음)
+# - 계산은 이 실행의 메모리 안에서만 일어난다.
+# - 로그에는 단계 이름만 남긴다. (기둥 · 간지 · 운세 · 주소 · 본문은 남기지 않는다)
+#
+# 실행 시각은 **UTC** 로 잡고, 안에서 한국 시간으로 "오늘"을 구한다.
+# (KST = UTC+9 이므로 새벽 UTC 실행이 한국 오전에 해당한다)
+name: Daily fortune e-mail
+
+on:
+  schedule:
+    # 매일 20:00 UTC = 한국 시간 다음 날 05:00.
+    # "한국 시간 0시" 에 가장 가깝게 도착한다.
+    - cron: "0 20 * * *"
+  workflow_dispatch:
+
+# 같은 시각에 두 번 돌아도 계산은 같지만, 메일이 두 번 가면 곤란하다.
+concurrency:
+  group: daily-fortune
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # 의존성을 install 하는 동안에도 비밀 값은 아직 노출되지 않는다.
+      - name: Install
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      # ── 여기부터 비밀 값이 이 단계 안에만 들어온다 ──────────────────
+      - name: Send today's fortune
+        env:
+          # 출생 정보
+          BIRTH_DATE: ${{ secrets.BIRTH_DATE }}
+          BIRTH_CALENDAR: ${{ secrets.BIRTH_CALENDAR }}
+          BIRTH_LEAP_MONTH: ${{ secrets.BIRTH_LEAP_MONTH }}
+          BIRTH_TIME: ${{ secrets.BIRTH_TIME }}
+          BIRTH_ZI_MODE: ${{ secrets.BIRTH_ZI_MODE }}
+          BIRTH_GENDER: ${{ secrets.BIRTH_GENDER }}
+          BIRTH_PLACE: ${{ secrets.BIRTH_PLACE }}
+          # 메일 계정
+          EMAIL_USERNAME: ${{ secrets.EMAIL_USERNAME }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+        run: npm run email

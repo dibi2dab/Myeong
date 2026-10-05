@@ -1,0 +1,10 @@
+# 저장소에는 LF 로 넣고, Windows 에서도 LF 로 꺼낸다.
+# (줄바꿈이 달라져 diff 가 더러워지는 것을 막는다. 빌드도 항상 같다.)
+* text=auto eol=lf
+
+# 이 파일들은 줄바꿈을 바꿔도 의미가 달라지지 않는다. (git 이 개행을 정규화하지 않는다)
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff binary
+*.woff2 binary

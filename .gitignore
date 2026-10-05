@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+*.local
+.DS_Store
+.vscode/
+.idea/
+
+# Never commit personal calculation output (see docs/privacy.md)
+*-fortune.md
+*-fortune.json
+user-saju.json
+.env
+.env.*
