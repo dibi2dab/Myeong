@@ -46,7 +46,7 @@ import { PILLAR_LABELS, computeFourPillars, pillarsOf, type FourPillars, type Pi
 import { seunRangeOf, wolunRangeOf } from "./periods/seunWolunIlun";
 import { computeYongshin, type YongshinResult } from "./yongshin/yongshin";
 import type { BirthInput, CalculationBasis, CalendarConversion, Gender } from "./types";
-import { isValidRegion } from "../data/regions/regions";
+import { isValidSido } from "../data/regions/regions";
 
 /** 음력 표가 담는 연도 범위. */
 export const LUNAR_SUPPORT_RANGE = Object.freeze({
@@ -143,7 +143,7 @@ export function validateBirthInput(input: BirthInput): void {
   if (!input.region) {
     throw new MyeongInputError("출생지를 선택해주세요.");
   }
-  if (!isValidRegion(input.region.sido, input.region.sigungu)) {
+  if (!isValidSido(input.region.sido)) {
     throw new MyeongInputError("출생지를 선택해주세요.");
   }
 }
@@ -431,13 +431,10 @@ export {
   type YinYang,
 } from "./constants/stems";
 export {
-  REGIONS,
   SIDO_LIST,
-  SIDO_WITHOUT_SIGUNGU,
-  isValidRegion,
-  regionText,
-  sigunguListOf,
-  type Region,
+  STANDARD_TIME_NOTE,
+  isValidSido,
+  sidoText,
 } from "../data/regions/regions";
 export {
   INTERACTION_TYPE_LABELS,

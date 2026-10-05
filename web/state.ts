@@ -11,7 +11,9 @@
 
 import type { BirthInput, CivilDate, Gender } from "../core";
 
-const STORAGE_KEY = "myeong.birth.v1";
+const STORAGE_KEY = "myeong.birth.v2";
+/** 시/군/구 를 받던 때의 키. 값만 읽어 지우고 새로 저장한다. */
+const LEGACY_STORAGE_KEY = "myeong.birth.v1";
 const SETTINGS_KEY = "myeong.settings.v1";
 
 /** localStorage 에 남기는 형태. 계산 결과는 담지 않는다. */
@@ -25,8 +27,8 @@ export interface StoredBirth {
   branchIndex: number | null;
   ziMode: "조자시" | "자정" | null;
   gender?: Gender;
+  /** 출생지 — 시·도만. 시/군/구는 묻지 않는다. */
   sido: string;
-  sigungu: string;
 }
 
 export interface Settings {
@@ -72,13 +74,43 @@ export function loadBirth(): StoredBirth | null {
   const s = storage();
   if (!s) return null;
   const raw = s.getItem(STORAGE_KEY);
-  if (!raw) return null;
+  if (!raw) return migrateLegacyBirth(s);
   try {
     const parsed: unknown = JSON.parse(raw);
     return isStoredBirth(parsed) ? parsed : null;
   } catch {
     // 손상된 값은 조용히 지우고 처음부터 다시 시작한다.
     s.removeItem(STORAGE_KEY);
+    return null;
+  }
+}
+
+/**
+ * 시/군/구 를 받던 v1 값을 읽어 시·도만 남기고 새 형식으로 옮긴다.
+ * 사용자가 다시 입력하지 않도록 하는 것이 목적이다. (계산 결과는 달라지지 않는다)
+ */
+function migrateLegacyBirth(s: Storage): StoredBirth | null {
+  const raw = s.getItem(LEGACY_STORAGE_KEY);
+  if (!raw) return null;
+  s.removeItem(LEGACY_STORAGE_KEY);
+  try {
+    const legacy: unknown = JSON.parse(raw);
+    if (!isLegacyBirth(legacy)) return null;
+    const migrated: StoredBirth = {
+      calendar: legacy.calendar,
+      year: legacy.year,
+      month: legacy.month,
+      day: legacy.day,
+      leapMonth: legacy.leapMonth,
+      timeKind: legacy.timeKind,
+      branchIndex: legacy.branchIndex,
+      ziMode: legacy.ziMode,
+      gender: legacy.gender,
+      sido: legacy.sido,
+    };
+    s.setItem(STORAGE_KEY, JSON.stringify(migrated));
+    return migrated;
+  } catch {
     return null;
   }
 }
@@ -144,12 +176,24 @@ function isStoredBirth(value: unknown): value is StoredBirth {
   if (b.timeKind !== "doubleHour" && b.timeKind !== "unknown") return false;
   if (b.timeKind === "doubleHour" && !Number.isInteger(b.branchIndex)) return false;
   if (b.gender !== undefined && b.gender !== "남" && b.gender !== "여") return false;
-  if (typeof b.sido !== "string" || typeof b.sigungu !== "string") return false;
+  if (typeof b.sido !== "string") return false;
   return true;
 }
 
+/** v1(시/군/구 를 받던) 값의 형태. */
+interface LegacyStoredBirth extends Omit<StoredBirth, "sido"> {
+  sido: string;
+  sigungu: string;
+}
+
+function isLegacyBirth(value: unknown): value is LegacyStoredBirth {
+  if (typeof value !== "object" || value === null) return false;
+  const b = value as Record<string, unknown>;
+  return isStoredBirth({ ...b, sido: b.sido }) && typeof b.sigungu === "string";
+}
+
 /** 저장 형태 → 계산기가 받는 입력. */
-export function toBirthInput(stored: StoredBirth, region: { sido: string; sigungu: string }): BirthInput {
+export function toBirthInput(stored: StoredBirth): BirthInput {
   return {
     calendar: stored.calendar,
     year: stored.year,
@@ -161,7 +205,7 @@ export function toBirthInput(stored: StoredBirth, region: { sido: string; sigung
         ? { kind: "doubleHour", branchIndex: stored.branchIndex, ziMode: stored.ziMode ?? "자정" }
         : { kind: "unknown" },
     gender: stored.gender,
-    region,
+    region: { sido: stored.sido },
   };
 }
 
@@ -178,7 +222,6 @@ export function toStored(input: BirthInput): StoredBirth {
     ziMode: input.time.kind === "doubleHour" ? input.time.ziMode : null,
     gender: input.gender,
     sido: input.region.sido,
-    sigungu: input.region.sigungu,
   };
 }
 

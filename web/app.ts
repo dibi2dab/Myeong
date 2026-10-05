@@ -84,7 +84,7 @@ export function boot(root: HTMLElement): App {
       if (!birth) throw new Error("출생 정보가 없습니다.");
       const key = JSON.stringify(birth);
       if (key !== cachedInputKey || cachedResult === null) {
-        cachedResult = analyzeBirth(toBirthInput(birth, { sido: birth.sido, sigungu: birth.sigungu }));
+        cachedResult = analyzeBirth(toBirthInput(birth));
         cachedInputKey = key;
       }
       return cachedResult;

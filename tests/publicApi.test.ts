@@ -96,11 +96,12 @@ describe("입력 오류 메시지", () => {
     delete (noRegion as { region?: unknown }).region;
     expectError(noRegion, "출생지를 선택해주세요.");
 
-    expectError(birth({ region: { sido: "", sigungu: "" } }), "출생지를 선택해주세요.");
-    expectError(birth({ region: { sido: "서울", sigungu: "종로구" } }), "출생지를 선택해주세요.");
-    expectError(birth({ region: { sido: "서울특별시", sigungu: "가짜구" } }), "출생지를 선택해주세요.");
+    expectError(birth({ region: { sido: "" } }), "출생지를 선택해주세요.");
+    expectError(birth({ region: { sido: "서울" } }), "출생지를 선택해주세요.");
+    // 시/군/구 이름은 시·도가 아니다. 자유 텍스트로 받지 않는다.
+    expectError(birth({ region: { sido: "종로구" } }), "출생지를 선택해주세요.");
     // 국가를 받는 자유 텍스트는 받지 않는다.
-    expectError(birth({ region: { sido: "대한민국", sigungu: "서울" } }), "출생지를 선택해주세요.");
+    expectError(birth({ region: { sido: "대한민국" } }), "출생지를 선택해주세요.");
   });
 
   it("성별 · 시진 · 자시 기준 미선택", () => {
@@ -131,7 +132,7 @@ describe("입력 오류 메시지", () => {
     const messages: string[] = [];
     const inputs: BirthInput[] = [
       birth({ year: 2024, month: 2, day: 30 }),
-      birth({ region: { sido: "서울", sigungu: "종로구" } }),
+      birth({ region: { sido: "서울" } }),
       birth({ year: 1800, month: 1, day: 1 }),
       lunarBirth({ year: 1990, month: 4, day: 15, leapMonth: true }),
     ];
@@ -256,8 +257,8 @@ describe("시주 미상", () => {
 
 describe("출생지", () => {
   it("계산에는 쓰지 않고 표기에만 남는다", () => {
-    const a = analyzeBirth(birth({ region: { sido: "서울특별시", sigungu: "종로구" } }));
-    const b = analyzeBirth(birth({ region: { sido: "부산광역시", sigungu: "해운대구" } }));
+    const a = analyzeBirth(birth({ region: { sido: "서울특별시" } }));
+    const b = analyzeBirth(birth({ region: { sido: "부산광역시" } }));
     // 출생지가 달라도 사주 계산 결과는 같다 (진태양시 보정을 하지 않는다).
     expect(ganZhiText(a.natal.chart.day.stem, a.natal.chart.day.branch)).toBe(
       ganZhiText(b.natal.chart.day.stem, b.natal.chart.day.branch),
@@ -345,7 +346,6 @@ describe("공개 API 표면", () => {
     expect(api.TWELVE_STAGES).toHaveLength(12);
     expect(api.DRILLDOWN_CHAIN).toEqual(["일운", "월운", "세운", "대운", "원국"]);
     expect(Object.keys(api.INTENSITY_LABELS)).toHaveLength(5);
-    expect(api.REGIONS.length).toBeGreaterThan(200);
     expect(api.SIDO_LIST).toHaveLength(17);
   });
 

@@ -6,7 +6,6 @@
 
 import type { CivilDate } from "./calendar/civilDate";
 import type { ZiHourMode } from "./constants/timeBranches";
-import type { Region } from "../data/regions/regions";
 
 /** 출생 시진 정보. */
 export type BirthTime =
@@ -15,6 +14,17 @@ export type BirthTime =
 
 /** 출생 성별 — 대운 순역(順逆) 행사에 사용한다. 미입력이면 간지순역법을 쓴다. */
 export type Gender = "남" | "여";
+
+/**
+ * 출생지. **시/도 17개 중 하나만** 고른다.
+ *
+ * 대한민국은 한 시간대(UTC+9)이고 이 프로젝트는 진태양시 보정을 하지 않으므로
+ * 시/군/구까지 세분화해도 간지 계산은 달라지지 않는다. 계산에 필요하지 않은
+ * 단계를 요구하지 않기 위해 시/군/구를 받지 않는다.
+ */
+export interface BirthRegion {
+  sido: string;
+}
 
 /** 사용자 입력 원본. */
 export interface BirthInput {
@@ -31,7 +41,7 @@ export interface BirthInput {
   time: BirthTime;
   gender?: Gender;
   /** 출생지 — 진태양시 보정을 하지 않으므로 계산에는 쓰지 않으나 표기에만 사용. */
-  region: Region;
+  region: BirthRegion;
 }
 
 /** 음력 입력을 양력으로 바꾼 결과 (화면에서 반드시 사용자에게 보여준다). */

@@ -10,7 +10,7 @@
  * 마스킹은 실수로 놓칠 수 있고, 파생된 형태(기둥 간지 · 요약문)는 마스킹되지 않는다.
  */
 
-import { todayInKorea, type BirthInput, type CivilDate, type Gender, type ZiHourMode } from "../core";
+import { isValidSido, todayInKorea, type BirthInput, type CivilDate, type Gender, type ZiHourMode } from "../core";
 
 /** 이 실행에 필요한 입력값 전부. */
 export interface EmailEnvironment {
@@ -79,14 +79,18 @@ function readGender(): Gender | undefined {
   throw new EmailConfigError(`환경변수 BIRTH_GENDER 은(는) "남" 또는 "여" 여야 합니다.`);
 }
 
-/** `시도/시군구` 형태. 계산에는 쓰이지 않고 표기에만 쓰인다. */
+/** 시·도 이름 하나. 계산에는 쓰이지 않고 표기에만 쓰인다. */
 function readRegion(): BirthInput["region"] {
-  const raw = read("BIRTH_PLACE");
-  const parts = raw.split("/").map((s) => s.trim());
-  if (parts.length !== 2 || parts[0] === "" || parts[1] === "") {
-    throw new EmailConfigError(`환경변수 BIRTH_PLACE 형식이 "시도/시군구" 가 아닙니다.`);
+  const raw = read("BIRTH_PLACE").trim();
+  if (raw === "") {
+    throw new EmailConfigError(`환경변수 BIRTH_PLACE 가 비어 있습니다. 시·도 이름을 적어주세요.`);
   }
-  return { sido: parts[0], sigungu: parts[1] };
+  if (!isValidSido(raw)) {
+    throw new EmailConfigError(
+      `환경변수 BIRTH_PLACE 가 대한민국의 시·도 17개 중 하나가 아닙니다: ${raw}`,
+    );
+  }
+  return { sido: raw };
 }
 
 function readPort(): number {

@@ -5,6 +5,7 @@
  * 저장된 값은 이 브라우저의 localStorage 안에만 있고, 어디로도 보내지 않는다.
  */
 
+import { STANDARD_TIME_NOTE } from "../../core";
 import { el, append, div, p, notice, card } from "../dom";
 import { dateKorean } from "../format";
 import { persistBirth, persistSettings, type App } from "../app";
@@ -98,7 +99,7 @@ function birthInputDateText(b: StoredBirth): string {
 }
 
 function regionTextOf(b: StoredBirth): string {
-  return b.sigungu ? `${b.sido} ${b.sigungu}` : b.sido;
+  return `${b.sido} (${STANDARD_TIME_NOTE})`;
 }
 
 /* ------------------------------------------------------------------ 화면 설정 */

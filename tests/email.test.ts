@@ -215,7 +215,7 @@ describe("환경변수 읽기", () => {
     BIRTH_TIME: "6",
     BIRTH_ZI_MODE: "자정",
     BIRTH_GENDER: "여",
-    BIRTH_PLACE: "서울특별시/서대문구",
+    BIRTH_PLACE: "서울특별시",
     EMAIL_USERNAME: "someone@example.com",
     EMAIL_PASSWORD: "app-password",
     EMAIL_TO: "someone@example.com",
@@ -280,7 +280,7 @@ describe("환경변수 읽기", () => {
     stubEnv(FULL);
     const env = readEnvironment();
     expect(env.birth.year).toBe(1990);
-    expect(env.birth.region.sigungu).toBe("서대문구");
+    expect(env.birth.region.sido).toBe("서울특별시");
     expect(env.smtp.port).toBe(465);
     expect(analyzeBirth(env.birth).natal.chart.year.stem).toBe("庚");
   });

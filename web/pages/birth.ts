@@ -13,12 +13,10 @@ import {
   LUNAR_SUPPORT_START,
   MyeongInputError,
   SIDO_LIST,
-  SIDO_WITHOUT_SIGUNGU,
+  STANDARD_TIME_NOTE,
   TIME_BRANCHES,
   convertCalendar,
   leapMonthOfLunarYear,
-  regionText,
-  sigunguListOf,
   validateBirthInput,
   type BirthInput,
   type CalendarConversionResult,
@@ -42,7 +40,6 @@ interface Draft {
   ziMode: ZiHourMode;
   gender: Gender | null;
   sido: string;
-  sigungu: string;
 }
 
 function emptyDraft(): Draft {
@@ -57,7 +54,6 @@ function emptyDraft(): Draft {
     ziMode: "자정",
     gender: null,
     sido: "",
-    sigungu: "",
   };
 }
 
@@ -101,7 +97,7 @@ function formBody(app: App, draft: Draft): HTMLElement {
       timeField(draft, refresh),
       // 자시일 때만 자시 기준을 묻는다. (선택하지 않으면 일주를 못 정한다)
       ...(draft.timeKind === "doubleHour" && draft.branchIndex === 0 ? [ziModeField(draft)] : []),
-      regionField(draft, refresh),
+      regionField(draft),
       genderField(draft),
     ]);
 
@@ -349,29 +345,27 @@ function ziModeField(d: Draft): HTMLElement {
   );
 }
 
-function regionField(d: Draft, refresh: Refresh): HTMLElement {
-  const sigunguOptions: [string, string][] = sigunguListOf(d.sido).map((s) => [s, s]);
-  const sidoSel = select("region-sido", SIDO_LIST.map((s) => [s, s] as const), d.sido, (v) => {
-    d.sido = v;
-    d.sigungu = "";
-    // 시 · 군 · 구 목록이 통째로 바뀌므로 다시 그린다.
-    refresh("region-sido");
-  }, "시 · 도 선택");
-  const sigunguSel = select("region-sigungu", sigunguOptions, d.sigungu, (v) => {
-    d.sigungu = v;
-  }, d.sido ? "시 · 군 · 구 선택" : "먼저 시 · 도를 고르세요");
-
-  const note = p("field__hint");
-  note.textContent = d.sido
-    ? SIDO_WITHOUT_SIGUNGU.includes(d.sido)
-      ? "이 지역은 시 · 군 · 구가 없어 아래 선택이 비어 있습니다."
-      : "시 · 군 · 구까지 골라야 합니다."
-    : "출생지를 고르세요. 계산에는 쓰지 않고 표기에만 남깁니다 (진태양시 보정을 하지 않는 기준입니다).";
+/**
+ * 출생지 — **시·도만** 고른다.
+ *
+ * 시·군·구를 묻지 않는 이유: 대한민국은 한 시간대(UTC+9)이고 이 프로젝트는
+ * 진태양시 보정을 하지 않는다. 시·군·구를 고른다고 간지가 달라지는 일은 없다.
+ * 단계가 늘면 같은 이름이 여러 번 보여 고르기만 어려워진다.
+ */
+function regionField(d: Draft): HTMLElement {
+  const sidoSel = select(
+    "region-sido",
+    SIDO_LIST.map((s) => [s, s] as const),
+    d.sido,
+    (v) => {
+      d.sido = v;
+    },
+    "시 · 도 선택",
+  );
 
   return div("stack", [
-    field("출생지 — 시 · 도", sidoSel, "region-sido"),
-    field("출생지 — 시 · 군 · 구", sigunguSel, "region-sigungu"),
-    note,
+    field("출생지", sidoSel, "region-sido"),
+    p("field__hint", `${STANDARD_TIME_NOTE} 기준 하나로 계산합니다. 시 · 군 · 구까지 고르지 않습니다.`),
   ]);
 }
 
@@ -421,7 +415,7 @@ function confirmStage(
       ? "출생시간 모름 (시주 미상)"
       : `${TIME_BRANCHES[draft.branchIndex].branch}시${draft.branchIndex === 0 ? ` · ${draft.ziMode} 기준` : ""}`,
   ]);
-  rows.push(["출생지", draft.sido ? regionText({ sido: draft.sido, sigungu: draft.sigungu }) : ""]);
+  rows.push(["출생지", draft.sido ? `${draft.sido} (${STANDARD_TIME_NOTE})` : ""]);
   rows.push(["성별", draft.gender ?? "선택 안 함 (간지순역법)"]);
 
   const dl = el("dl", { class: "deflist" });
@@ -471,6 +465,6 @@ function toBirthInput(draft: Draft): BirthInput {
           }
         : { kind: "unknown" },
     gender: draft.gender ?? undefined,
-    region: { sido: draft.sido, sigungu: draft.sigungu },
+    region: { sido: draft.sido },
   };
 }
