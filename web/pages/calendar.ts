@@ -133,15 +133,18 @@ function dayCell(
     class: classes.join(" "),
     "aria-label": `${dateKorean(date)} 일진 ${fortune.context.ilun.ganZhi}${total ? `, 총운 ${total.intensity}` : ""}`,
     "aria-current": isSelected ? "date" : undefined,
-    onclick: () => app.setDate(date),
+    onclick: () => {
+      app.setDate(date);
+      window.location.hash = "#/ilun";
+    },
   });
 
   append(button, [
     el("span", { class: "cal__day", text: String(date.day) }),
     el("span", { class: "cal__ilun", text: fortune.context.ilun.ganZhi }),
     total ? intensityBadge(total.intensity) : null,
-    fortune.reading.cautions.length > 0
-      ? el("span", { class: "cal__caution", title: "주의점 있음", text: "!" })
+    (fortune.reading.cautions.length > 0 || fortune.reading.sections.some((s) => s.evidence.length > 0))
+      ? el("span", { class: "cal__dot", "aria-hidden": "true", title: "변화 신호 있음" })
       : null,
   ]);
 

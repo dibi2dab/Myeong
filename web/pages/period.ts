@@ -15,8 +15,8 @@ import {
   type PeriodPillar,
 } from "../../core";
 import { el, div, p, notice, card } from "../dom";
-import { dateKorean, periodTable } from "../format";
-import { dateControls, evidenceBlock, fortuneSectionCard, interactionList, toIso } from "../components";
+import { periodTable } from "../format";
+import { evidenceBlock, fortuneSectionCard, interactionList, toIso } from "../components";
 import type { App } from "../app";
 
 const PERIOD_META: Readonly<
@@ -57,9 +57,8 @@ export function renderPeriod(app: App, route: string): HTMLElement {
 
   stack.append(
     div("toolbar", [
-      dateControls(date, (d) => app.setDate(d)),
+      periodNav(app, route, date),
       el("h1", { class: "page-title", text: meta.title }),
-      p("muted", dateKorean(date)),
     ]),
   );
 
@@ -129,6 +128,54 @@ function periodDl(kind: PeriodKind, fortune: ReturnType<typeof analyzeFortune>):
  * 각 항목 옆에 "이 항목은 어느 층위까지 봤다"를 붙인다.
  * 사용자가 대운 없이 연운만 보고 있다는 오해를 막기 위한 한 줄 표기다.
  */
+function periodNav(app: App, route: string, date: ReturnType<typeof analyzeFortune>["context"]["date"]): HTMLElement {
+  const wrap = div("period-nav");
+  if (route === "seun") {
+    const year = date.year;
+    wrap.append(
+      el("button", { class: "btn", text: "◀ 이전 해", type: "button", onclick: () => app.setDate({ year: year - 1, month: 1, day: 1 }) }),
+      el("span", { class: "period-nav__label", text: `${year}년 연운` }),
+      el("button", { class: "btn", text: "다음 해 ▶", type: "button", onclick: () => app.setDate({ year: year + 1, month: 1, day: 1 }) }),
+    );
+    return wrap;
+  }
+  if (route === "wolun") {
+    const prev = shiftMonth(date, -1);
+    const next = shiftMonth(date, 1);
+    wrap.append(
+      el("button", { class: "btn", text: "◀ 이전 달", type: "button", onclick: () => app.setDate({ ...prev, day: 1 }) }),
+      el("span", { class: "period-nav__label", text: `${date.year}년 ${date.month}월 월운` }),
+      el("button", { class: "btn", text: "다음 달 ▶", type: "button", onclick: () => app.setDate({ ...next, day: 1 }) }),
+    );
+    return wrap;
+  }
+  if (route === "ilun") {
+    const prev = shiftDay(date, -1);
+    const next = shiftDay(date, 1);
+    wrap.append(
+      el("button", { class: "btn", text: "◀ 어제", type: "button", onclick: () => app.setDate(prev) }),
+      el("span", { class: "period-nav__label", text: `${date.year}년 ${date.month}월 ${date.day}일 일운` }),
+      el("button", { class: "btn", text: "내일 ▶", type: "button", onclick: () => app.setDate(next) }),
+    );
+    return wrap;
+  }
+  return wrap;
+}
+
+function shiftMonth(d: { year: number; month: number; day: number }, delta: number): { year: number; month: number; day: number } {
+  let y = d.year;
+  let m = d.month + delta;
+  while (m < 1) { m += 12; y -= 1; }
+  while (m > 12) { m -= 12; y += 1; }
+  return { year: y, month: m, day: Math.min(d.day, 31) };
+}
+
+function shiftDay(d: { year: number; month: number; day: number }, delta: number): { year: number; month: number; day: number } {
+  const ts = Date.UTC(d.year, d.month - 1, d.day) + delta * 86400000;
+  const dt = new Date(ts);
+  return { year: dt.getUTCFullYear(), month: dt.getUTCMonth() + 1, day: dt.getUTCDate() };
+}
+
 function withLayerNote(
   topic: FortuneTopic,
   layerLabel: string,
