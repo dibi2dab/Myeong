@@ -121,11 +121,18 @@ export function boot(root: HTMLElement): App {
     if (state.storageNotice) body.push(notice(state.storageNotice, "error"));
     else if (state.settings.showDisclaimer) body.push(p("disclaimer", DISCLAIMER_SHORT));
 
-    if (!hasBirth && MENU.find((m) => m.route === route)?.needsBirth) {
-      body.push(emptyState());
-    } else {
-      body.push(safeRoute(app, route));
+    const needsBirth = MENU.find((m) => m.route === route)?.needsBirth ?? false;
+    if (!hasBirth && needsBirth) {
+      writeRoute("birth");
+      draw();
+      return;
     }
+    if (!hasBirth && route !== "birth" && route !== "glossary" && route !== "rules") {
+      writeRoute("birth");
+      draw();
+      return;
+    }
+    body.push(safeRoute(app, route));
 
     append(main, body);
     root.replaceChildren(header(route, hasBirth), main, footer());
@@ -155,6 +162,7 @@ function renderRoute(app: App, route: string): Child {
     case "birth":
       return renderBirthForm(app);
     case "today":
+      if (!app.state.birth) return renderBirthForm(app);
       return renderToday(app);
     case "natal":
       return renderNatal(app);
@@ -222,13 +230,7 @@ function footer(): HTMLElement {
   return foot;
 }
 
-function emptyState(): HTMLElement {
-  return div("empty", [
-    el("h2", { class: "empty__title", text: "아직 출생 정보가 없습니다." }),
-    p("muted", "출생 정보를 입력하면 내 사주와 운세를 볼 수 있습니다. 입력한 값은 이 브라우저에만 저장됩니다."),
-    el("a", { class: "btn btn--primary", href: "#/birth", text: "출생 정보 입력하기" }),
-  ]);
-}
+// 최초 진입 시 출생정보가 없으면 바로 폼으로 보낸다 (§1). 따로 빈 상태 화면은 쓰지 않는다.
 
 /* ------------------------------------------------------------------ 저장 헬퍼 (화면들이 함께 쓴다) */
 
@@ -243,7 +245,12 @@ export function persistBirth(app: App, birth: StoredBirth | null): void {
   app.state.birth = birth;
   app.invalidate();
   app.state.storageNotice = birth === null ? clearBirth() : null;
-  writeRoute("today");
+  if (birth === null) {
+    clearBirth();
+    writeRoute("birth");
+  } else {
+    writeRoute("today");
+  }
   app.refresh();
 }
 
