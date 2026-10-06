@@ -68,7 +68,7 @@ export function renderToday(app: App): HTMLElement {
     ], { id: "keypoints" }),
   );
 
-  /* ---- 운세 8개 항목 */
+  /* ---- 운세 항목 */
   const sections = div("stack");
   for (const section of reading.sections) sections.append(fortuneSectionCard(section));
   stack.append(sections);

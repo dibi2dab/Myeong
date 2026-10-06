@@ -422,6 +422,12 @@ export {
 } from "./lunar/lunarDate";
 export { ELEMENT_COLOR, ELEMENT_KOREAN, VERDICT_MEANING } from "./elements/elementBalance";
 export {
+  analyzeElements,
+  type ElementAnalysis,
+  type ElementRole,
+  type ElementState,
+} from "./elements/elementAnalysis";
+export {
   ELEMENT_LABELS,
   FIVE_ELEMENTS,
   type EarthlyBranch,

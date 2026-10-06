@@ -28,6 +28,7 @@ import { renderCompare } from "./pages/compare";
 import { renderBirthForm } from "./pages/birth";
 import { renderSettings } from "./pages/settings";
 import { glossaryScreen, ruleCatalogView } from "./pages/glossary";
+import { renderElements } from "./pages/elements";
 
 /* ------------------------------------------------------------------ 메뉴 */
 
@@ -45,6 +46,7 @@ export const MENU: readonly MenuItem[] = Object.freeze([
   { route: "seun", label: "연운", needsBirth: true },
   { route: "wolun", label: "월운", needsBirth: true },
   { route: "ilun", label: "일운", needsBirth: true },
+  { route: "elements", label: "오행 분석", needsBirth: true },
   { route: "calendar", label: "운세 캘린더", needsBirth: true },
   { route: "compare", label: "기간 비교", needsBirth: true },
   { route: "glossary", label: "용어집", needsBirth: false },
@@ -172,6 +174,8 @@ function renderRoute(app: App, route: string): Child {
     case "wolun":
     case "ilun":
       return renderPeriod(app, route);
+    case "elements":
+      return renderElements(app);
     case "calendar":
       return renderCalendar(app);
     case "compare":
