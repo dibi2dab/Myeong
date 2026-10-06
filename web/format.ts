@@ -9,15 +9,21 @@
 
 import {
   ELEMENT_KOREAN,
+  branchParts,
   formatCivilDate,
+  stemParts,
+  tenGodLabel,
+  twelveStageLabel,
   type CivilDate,
   type FiveElement,
   type HeavenlyStem,
+  type LabelParts,
 } from "../core";
 import type { Pillar, PillarPosition } from "../core";
 import type { PeriodPillar } from "../core/periods/period";
 import type { HiddenStem } from "../core/hidden_stems/hiddenStems";
-import { tenGodOfStem, type TenGod } from "../core/ten_gods/tenGods";
+import { isTenGod, tenGodOfStem } from "../core/ten_gods/tenGods";
+import { isTwelveStageName } from "../core/twelve_stages/twelveStages";
 import { el, append, type Child } from "./dom";
 
 /* ------------------------------------------------------------------ 오행 */
@@ -39,24 +45,36 @@ export function elementList(elements: readonly FiveElement[]): DocumentFragment 
 
 /* ------------------------------------------------------------------ 간지 글자 */
 
+/**
+ * 한자를 한국어 음독·오행과 함께 보여 준다.
+ *
+ * `경금(庚金)` 처럼 두 조각으로 나누는 이유: 한자는 뒤로 물리고 글자는 앞쪽이
+ * 눈에 들어와야 한다. 화면에는 `경금  (庚金)` 로 보이고, 한자만 읽는 사람은
+ * 괄호 부분을 찾아볼 수 있다. **어느 쪽도 홀로 나타나지 않는다.**
+ */
+function partsCell(
+  parts: LabelParts,
+  element: FiveElement,
+  variant: string,
+): HTMLElement {
+  return el("span", {
+    class: `gz gz--${variant}`,
+    "data-element": element,
+    children: [
+      el("span", { class: "gz__ko", text: parts.main }),
+      el("span", { class: "gz__han", text: parts.hanja }),
+    ],
+  });
+}
+
 /** 천간 한 글자. 천간의 오행 색을 쓴다. */
 export function stemCell(stem: HeavenlyStem, element: FiveElement): HTMLElement {
-  return el("span", {
-    class: "gz gz--stem",
-    "data-element": element,
-    "aria-label": `${stem} · ${ELEMENT_KOREAN[element]}`,
-    text: stem,
-  });
+  return partsCell(stemParts(stem), element, "stem");
 }
 
 /** 지지 한 글자. 지지의 본기 오행 색을 쓴다. */
 export function branchCell(branch: string, element: FiveElement): HTMLElement {
-  return el("span", {
-    class: "gz gz--branch",
-    "data-element": element,
-    "aria-label": `${branch} · ${ELEMENT_KOREAN[element]}`,
-    text: branch,
-  });
+  return partsCell(branchParts(branch), element, "branch");
 }
 
 /** 천간+지지를 나란히. */
@@ -72,15 +90,34 @@ export function ganZhiPair(stem: HeavenlyStem, stemEl: FiveElement, branch: stri
  * 지장간 목록. 본기 / 중기 / 여기 층을 함께 보여준다.
  * `tenGods` 를 주면 지장간 천간의 십신도 함께 붙인다. (원국·운 표기 모두 길이 = hidden.length)
  */
+/**
+ * 지장간 목록. 본기 / 중기 / 여기 층을 함께 보여준다.
+ * `tenGods` 를 주면 지장간 천간의 십신도 함께 붙인다. (원국·운 표기 모두 길이 = hidden.length)
+ *
+ * 지장간의 오행은 글자(`경금(庚金)`) 안에 이미 들어 있으므로 오행 태그를 따로
+ * 넣지 않는다. 같은 정보를 두 번 보여주면 어느 쪽을 믿어야 할지 헷갈린다.
+ */
 export function hiddenList(hidden: readonly HiddenStem[], tenGods?: readonly string[]): HTMLElement {
   const ul = el("ul", { class: "hidden-stems" });
   hidden.forEach((h, i) => {
-    const parts: Child[] = [elementTag(h.element), el("span", { class: "hs-stem", text: h.stem })];
-    if (tenGods) parts.push(el("span", { class: "tg", text: tenGods[i] ?? "" }));
+    const parts: Child[] = [partsCell(stemParts(h.stem), h.element, "stem")];
+    if (tenGods && tenGods[i]) parts.push(tenGodTag(tenGods[i]));
     parts.push(el("span", { class: "hs-layer", text: h.layer }));
     ul.append(el("li", { class: "hidden-stems__item", children: parts }));
   });
   return ul;
+}
+
+/** 십신 한 개. 예: `편재(偏財)` */
+export function tenGodTag(key: string): HTMLElement {
+  if (!isTenGod(key)) throw new Error(`알 수 없는 십신입니다: ${key}`);
+  return el("span", { class: "tg", text: tenGodLabel(key) });
+}
+
+/** 십이운성 한 개. 예: `장생(長生)` */
+export function stageTag(name: string): HTMLElement {
+  if (!isTwelveStageName(name)) throw new Error(`알 수 없는 십이운성입니다: ${name}`);
+  return el("span", { class: "stage", text: twelveStageLabel(name) });
 }
 
 /** 원국의 지장간 십신. (Pillar 에는 지장간만 있고 십신은 따로 계산된다) */
@@ -119,10 +156,10 @@ export function pillarTable(pillars: readonly Pillar[], dayMaster: HeavenlyStem,
   const body = el("tbody");
   append(body, [
     pillarRow("천간", pillars, (p) => stemCell(p.stem, p.element)),
-    pillarRow("천간 십신", pillars, (p) => el("span", { class: "tg", text: p.tenGod })),
+    pillarRow("천간 십신", pillars, (p) => tenGodTag(p.tenGod)),
     pillarRow("지지", pillars, (p) => branchCell(p.branch, p.branchElement)),
     pillarRow("지장간", pillars, (p) => hiddenList(p.hidden, hiddenTenGodsOf(p, dayMaster))),
-    pillarRow("지지 십이운성", pillars, (p) => el("span", { class: "stage", text: p.stage.key })),
+    pillarRow("지지 십이운성", pillars, (p) => stageTag(p.stage.key)),
   ]);
   append(table, [body]);
   return table;
@@ -165,9 +202,9 @@ export function periodTable(periods: readonly PeriodPillar[], caption: string): 
   const body = el("tbody");
   append(body, [
     periodRow("간지", periods, (p) => ganZhiPair(p.stem, p.element, p.branch, p.branchElement)),
-    periodRow("천간 십신", periods, (p) => el("span", { class: "tg", text: p.tenGod })),
+    periodRow("천간 십신", periods, (p) => tenGodTag(p.tenGod)),
     periodRow("십신 계열", periods, (p) => el("span", { class: "tg-group", text: p.tenGodGroup })),
-    periodRow("십이운성", periods, (p) => el("span", { class: "stage", text: p.stage.key })),
+    periodRow("십이운성", periods, (p) => stageTag(p.stage.key)),
     periodRow("지장간", periods, (p) => hiddenList(p.hidden, p.hiddenTenGods)),
   ]);
   append(table, [body]);
@@ -208,7 +245,3 @@ export function kstTimeText(t: {
 }
 
 /* ------------------------------------------------------------------ misc */
-
-export function tenGodTag(god: TenGod): HTMLElement {
-  return el("span", { class: "tg", text: god });
-}

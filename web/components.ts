@@ -211,23 +211,33 @@ export function intensityBadge(intensity: Intensity): HTMLElement {
   });
 }
 
-/** 운세 8개 항목 카드 하나. */
+/** 이유를 한 문단씩 잘라 보여주는 블록. (전문용어를 억지로 나열하지 않는다) */
+export function whyBlock(title: string, lines: readonly string[]): HTMLElement {
+  const ul = el("ul", { class: "why" });
+  for (const line of lines) ul.append(el("li", { text: line }));
+  const details = el("details", { class: "why-box" });
+  append(details, [el("summary", { class: "why-box__summary", text: title }), ul]);
+  return details;
+}
+
+/** 운세 항목 카드 하나 — 사용자 해석 우선 (§52: 결론 → 작용 → 왜 → 의미 → 근거) */
 export function fortuneSectionCard(section: FortuneSection): HTMLElement {
   const badges = span("section__badges", [
     intensityBadge(section.intensity),
     span("badge", section.direction),
   ]);
 
-  return card(undefined, [
+  const content: Child[] = [
     div("section__head", [
       el("h3", { class: "section__title", text: section.topic }),
       badges,
     ]),
-    p("section__label", "[해석]"),
     p("section__interpretation", section.interpretation),
-    p("section__label", "[분석 근거]"),
-    evidenceBlock(section.evidence, "이 항목의 근거"),
-  ]);
+  ];
+
+  content.push(evidenceBlock(section.evidence, "왜 이렇게 해석되었나요?"));
+
+  return card(undefined, content);
 }
 
 /** 오늘의 운세 → 일운 → 월운 → 세운 → 대운 → 원국. */

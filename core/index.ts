@@ -420,7 +420,7 @@ export {
   leapMonthOfLunarYear,
   type LunarDate,
 } from "./lunar/lunarDate";
-export { ELEMENT_COLOR, ELEMENT_KOREAN } from "./elements/elementBalance";
+export { ELEMENT_COLOR, ELEMENT_KOREAN, VERDICT_MEANING } from "./elements/elementBalance";
 export {
   ELEMENT_LABELS,
   FIVE_ELEMENTS,
@@ -430,6 +430,25 @@ export {
   type Season,
   type YinYang,
 } from "./constants/stems";
+export {
+  branchLabel,
+  branchParts,
+  elementKorean,
+  elementLabel,
+  elementParts,
+  ganZhiLabel,
+  ganZhiParts,
+  joinParts,
+  nameLabel,
+  nameParts,
+  stemLabel,
+  stemParts,
+  tenGodLabel,
+  tenGodParts,
+  twelveStageLabel,
+  twelveStageParts,
+  type LabelParts,
+} from "./text/labels";
 export {
   SIDO_LIST,
   STANDARD_TIME_NOTE,

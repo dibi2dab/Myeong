@@ -32,6 +32,7 @@ import {
 } from "../constants/stems";
 import { hiddenStemsOf } from "../hidden_stems/hiddenStems";
 import type { FourPillars, Pillar } from "../pillars/fourPillars";
+import { nameLabel, stemLabel } from "../text/labels";
 
 /* ------------------------------------------------------------------ 표시용 재수출 */
 
@@ -329,6 +330,18 @@ export function elementFlowLines(): readonly ElementFlowLine[] {
 
 export type DayMasterVerdict = "신강" | "중화" | "신약";
 
+/**
+ * 강약 판단 한 줄 뜻.
+ *
+ * `신강` 이라는 글자를 처음 보는 사람이 "그래서 무엇이 좋은 건가" 를 되묻지
+ * 않게 하려고 둔다. (화면이 첫 등장 자리에서 붙여 준다)
+ */
+export const VERDICT_MEANING: Readonly<Record<DayMasterVerdict, string>> = Object.freeze({
+  신강: "일간을 돕는 기운이 상대적으로 강한 상태. 본인이 버틸 힘이 충분하다는 뜻이지, 항상 좋은 사주라는 뜻은 아니다",
+  중화: "일간을 돕는 기운과 빼앗는 기운이 비슷한 상태. 어느 한쪽으로 기울지 않는다",
+  신약: "일간을 돕는 기운이 상대적으로 약한 상태. 스스로는 버티기보다 도움을 받는 형태가 맞다",
+});
+
 export interface DayMasterStrength {
   dayMaster: HeavenlyStem;
   element: FiveElement;
@@ -357,7 +370,7 @@ export function dayMasterStrength(
   const monthRel = elementRelation(dmEl, monthEl);
   const monthHelps = monthRel === "비화" || monthRel === "인성";
   evidence.push(
-    `월지 ${monthBranch}(본기 ${ELEMENT_KOREAN[monthEl]})와 일간 ${dm}(${ELEMENT_KOREAN[dmEl]})는 ${monthRel} 관계이므로, 월지가 일간을 ${
+    `월지 ${nameLabel(monthBranch)}(본기 ${ELEMENT_KOREAN[monthEl]})와 일간 ${stemLabel(dm)}는 ${monthRel} 관계이므로, 월지가 일간을 ${
       monthHelps ? "돕는다(得地)" : "빼앗는다(失地)"
     }.`,
   );
@@ -389,10 +402,10 @@ export function dayMasterStrength(
     // 천간 열 자는 모두 받침이 있는 한자음이라 여기서 \"…이\" 가 맞다. (甲~癸 전부)
     if (rel === "비화" || rel === "인성") {
       allyScore += 1;
-      evidence.push(`${label} ${p.branch}의 천간 ${p.stem}이 일간을 돕는다.`);
+      evidence.push(`${label} ${nameLabel(p.branch)}의 천간 ${stemLabel(p.stem)}이 일간을 돕는다.`);
     } else if (rel === "관살") {
       allyScore -= 1;
-      evidence.push(`${label} ${p.branch}의 천간 ${p.stem}이 일간을 제약한다(관살).`);
+      evidence.push(`${label} ${nameLabel(p.branch)}의 천간 ${stemLabel(p.stem)}이 일간을 제약한다(관살).`);
     }
     for (const h of hiddenStemsOf(p.branch)) {
       const hRel = elementRelation(dmEl, h.element);
@@ -405,12 +418,12 @@ export function dayMasterStrength(
   const voids = voidBranchesOf(chart.day.ganZhiIndex);
   if (voids.includes(monthBranch)) {
     evidence.push(
-      `일지 ${chart.day.branch}가 속한 旬의 절지(空亡)에 월지 ${monthBranch}가 들어 있어, 월지의 힘이 반감된다.`,
+      `일지 ${nameLabel(chart.day.branch)}가 속한 旬의 절지(空亡)에 월지 ${nameLabel(monthBranch)}가 들어 있어, 월지의 힘이 반감된다.`,
     );
     allyScore -= 1;
   }
   if (voids.includes(chart.day.branch)) {
-    evidence.push(`일지 ${chart.day.branch} 자신이 절지에 빠져 주체성이 약해진다.`);
+    evidence.push(`일지 ${nameLabel(chart.day.branch)} 자신이 절지에 빠져 주체성이 약해진다.`);
   }
 
   // ⑤ 오행 분포 비율

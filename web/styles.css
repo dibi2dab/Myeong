@@ -322,18 +322,48 @@ thead th { background: var(--surface-2); font-weight: 700; }
   color: var(--ink-3);
 }
 
+/*
+ * 한자 칸 — `경금(庚金)` 처럼 한글과 한자를 함께 보여 준다.
+ *
+ * 두 줄로 나누는 이유: 한 줄로 이어 붙이면 기둥 표의 폭이 과도하게 넓어지고,
+ * 어느 쪽이 글자인지 눈에 띄지 않는다. 위에 굵은 한국어, 아래에 옅은 한자를
+ * 두면 어느 쪽이 글자인지 알면서도 한자가 주는 추가 정보가 함께 읽힌다.
+ */
 .gz {
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  font-size: 1.25rem;
-  font-weight: 700;
+  gap: 0.05em;
+  min-width: 2.6rem;
+  padding: 0.25rem 0.35rem;
   border-radius: var(--radius);
+  line-height: 1.25;
 }
-.gz--stem { color: var(--ink); }
+.gz--stem,
 .gz--branch { color: var(--ink); }
+
+.gz__ko {
+  font-size: 1rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.gz__han {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+/* 지장간 목록처럼 빽빽한 자리에서는 한 줄로 붙여 폭을 아낀다. */
+.hidden-stems .gz {
+  flex-direction: row;
+  gap: 0.2em;
+  min-width: 0;
+  padding: 0.1rem 0.3rem;
+}
+.hidden-stems .gz__ko { font-size: 0.85rem; font-weight: 600; }
+.hidden-stems .gz__han { font-size: 0.75rem; }
 
 .gz[data-element="木"], .el[data-element="木"] { background: color-mix(in oklab, var(--el-wood) 16%, transparent); }
 .gz[data-element="火"], .el[data-element="火"] { background: color-mix(in oklab, var(--el-fire) 16%, transparent); }

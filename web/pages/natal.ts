@@ -5,7 +5,7 @@
  * 그래서 이 화면을 운세 화면과 아예 다르게 꾸민다.
  */
 
-import { DISCLAIMER_TEXT, ELEMENT_KOREAN, type SajuResult } from "../../core";
+import { DISCLAIMER_TEXT, ELEMENT_KOREAN, VERDICT_MEANING, stemLabel, type SajuResult } from "../../core";
 import { el, append, div, p, notice, card } from "../dom";
 import { dateKorean, kstTimeText, pillarTable } from "../format";
 import {
@@ -15,6 +15,7 @@ import {
   interactionList,
   moonCommandLine,
   voidBranchesLine,
+  whyBlock,
 } from "../components";
 import type { App } from "../app";
 
@@ -87,23 +88,49 @@ function basisTable(result: SajuResult): HTMLElement {
   return dl;
 }
 
+/**
+ * 일간 강약 (지시 §15)
+ *
+ * 순서를 뒤집는다. `신강` 이라는 글자만 먼저 보여주면 "그래서 무엇이 좋은가" 를
+ * 되묻게 된다. 그래서 **무엇을 판단했는지 → 왜 그렇게 판단했는지 → 규칙 번호** 순으로
+ * 놓는다. 규칙 번호는 맨 아래 접힌 자리에만 둔다.
+ */
 function strengthBlock(result: SajuResult): HTMLElement {
   const s = result.natal.strength;
   const wrap = div("stack");
 
+  // 1) 결론
   wrap.append(
-    p("verdict", [
-      el("strong", { text: `${s.dayMaster} (${ELEMENT_KOREAN[s.element]})` }),
-      document.createTextNode(" · "),
-      el("strong", { text: s.verdict }),
+    div("verdict-grid", [
+      div("verdict-grid__item", [
+        el("span", { class: "verdict-grid__label", text: "일간" }),
+        el("strong", { class: "verdict-grid__value", text: stemLabel(s.dayMaster) }),
+      ]),
+      div("verdict-grid__item", [
+        el("span", { class: "verdict-grid__label", text: "강약" }),
+        el("strong", { class: "verdict-grid__value", text: s.verdict }),
+      ]),
     ]),
   );
+
+  // 2) 강약이라는 말이 무엇인지 — 첫 등장 용어를 여기서 풀어 준다.
+  wrap.append(p("muted", VERDICT_MEANING[s.verdict]));
+
+  // 3) 왜 그렇게 판단했는지 — 전문용어를 한국어로 풀어 쓴다.
   wrap.append(
-    p("muted",
-      s.verdict === "중화"
-        ? "일간 세력이 중간쯤이라 어느 한쪽으로 기울지 않습니다."
-        : "일간이 한쪽으로 뚜렷하게 기울어져 있습니다."),
+    whyBlock(
+      "왜 그렇게 판단하나요?",
+      [
+        "태어난 달의 기운(월령)이 일간을 돕는지, 빼앗는지 봅니다.",
+        "월지 안의 지장간이 일간에게 어떤 힘이 되는지 기(氣)의 무게로 합산합니다.",
+        "연지·일지·시지가 일간을 돕는지 제약하는지 함께 봅니다.",
+        "절지(空亡)에 빠져 기운이 반감되는 자리가 있는지도 봅니다.",
+        "다섯 오행의 분포에서 일간의 오행이 얼마나 차지하는지 더합니다.",
+      ],
+    ),
   );
+
+  // 4) 계산 근거
   wrap.append(evidenceBlock(
     s.evidence.map((text, i) => ({
       ruleId: RULE_DAYMASTER,
@@ -111,7 +138,7 @@ function strengthBlock(result: SajuResult): HTMLElement {
       layer: "원국" as const,
       detail: `근거 ${i + 1}`,
     })),
-    "일간 강약 판단 근거",
+    "상세 계산 근거 보기",
   ));
   return wrap;
 }

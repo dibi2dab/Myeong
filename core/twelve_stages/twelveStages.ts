@@ -40,6 +40,17 @@ export const TWELVE_STAGES: readonly TwelveStageInfo[] = [
 
 const STAGE_BY_STEP: readonly TwelveStageInfo[] = TWELVE_STAGES;
 
+/** 이름 → 정보. (표기 모듈이 이름만 받아 한자 표기를 붙일 때 쓴다) */
+export const TWELVE_STAGE_BY_NAME: Readonly<Record<TwelveStageName, TwelveStageInfo>> = Object.freeze(
+  TWELVE_STAGES.reduce(
+    (acc, s) => {
+      acc[s.key] = s;
+      return acc;
+    },
+    {} as Record<TwelveStageName, TwelveStageInfo>,
+  ),
+);
+
 const LONG_LIFE_BRANCH: Readonly<Record<HeavenlyStem, EarthlyBranch>> = {
   甲: "亥",
   乙: "午",
@@ -64,6 +75,11 @@ const BRANCH_INDEX_BY_CHAR: Readonly<Record<string, number>> = Object.freeze(
 );
 
 /** 양간(甲丙戊庚壬)이면 true. */
+/** 등록된 십이운성 이름만 참. (표기 모듈이 검증할 때 쓴다) */
+export function isTwelveStageName(value: string): value is TwelveStageName {
+  return Object.hasOwn(TWELVE_STAGE_BY_NAME, value);
+}
+
 export function isYangStem(stem: HeavenlyStem): boolean {
   return ["甲", "丙", "戊", "庚", "壬"].includes(stem);
 }
