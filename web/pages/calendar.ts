@@ -139,10 +139,13 @@ function dayCell(
     },
   });
 
+  const keyPoint = readingKeyPoint(fortune);
+
   append(button, [
     el("span", { class: "cal__day", text: String(date.day) }),
     el("span", { class: "cal__ilun", text: fortune.context.ilun.ganZhi }),
     total ? intensityBadge(total.intensity) : null,
+    keyPoint ? el("span", { class: "cal__key", text: keyPoint }) : null,
     (fortune.reading.cautions.length > 0 || fortune.reading.sections.some((s) => s.evidence.length > 0))
       ? el("span", { class: "cal__dot", "aria-hidden": "true", title: "변화 신호 있음" })
       : null,
@@ -151,6 +154,26 @@ function dayCell(
   const td = el("td", { class: "cal__td" });
   td.append(button);
   return td;
+}
+
+function readingKeyPoint(fortune: ReturnType<typeof analyzeFortune>): string | null {
+  if (fortune.reading.cautions.length > 0) return "주의";
+  const topics = fortune.reading.sections.filter((s) => s.evidence.length > 0 && s.topic !== "총운");
+  if (topics.length === 0) return null;
+  // 가장 강한 기세가 있는 항목을 대표로 뽑는다
+  const rank: Record<string, number> = { 매우두드러짐: 5, 뚜렷함: 4, 보통: 3, 약함: 2, 미미함: 1 };
+  topics.sort((a, b) => (rank[b.intensity] ?? 0) - (rank[a.intensity] ?? 0));
+  const top = topics[0].topic;
+  const map: Record<string, string> = {
+    재물운: "재물",
+    "직업·사업운": "직업",
+    애정운: "애정",
+    대인관계운: "대인",
+    "학업·성장운": "학업",
+    건강운: "건강",
+    "이동·변화운": "이동",
+  };
+  return map[top] ?? top.replace("운", "");
 }
 
 function weekdayOf(d: CivilDate): number {
